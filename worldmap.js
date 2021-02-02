@@ -22,6 +22,7 @@ module.exports = function(RED) {
     var compression = require("compression");
     var sockjs = require('sockjs');
     var sockets = {};
+    var prev = {}
     RED.log.info("Worldmap version " + require('./package.json').version );
     // add the cgi module for serving local maps....
     RED.httpNode.use("/cgi-bin/mapserv", require('cgi')(__dirname + '/mapserv'));
@@ -46,6 +47,9 @@ module.exports = function(RED) {
         node.allowFileDrop = n.allowFileDrop || "false";
         node.path = n.path || "/worldmap";
         if (node.path.charAt(0) != "/") { node.path = "/" + node.path; }
+        prev.lat = node.lat;
+        prev.lon = node.lon;
+        prev.zoom = node.zoom;
         if (!sockets[node.path]) {
             var libPath = path.posix.join(RED.settings.httpNodeRoot, node.path, 'leaflet', 'sockjs.min.js');
             var sockPath = path.posix.join(RED.settings.httpNodeRoot,node.path,'socket');
@@ -73,6 +77,9 @@ module.exports = function(RED) {
                     if (node.layer && node.layer.length > 0) { c.layer = node.layer; }
                     if (node.cluster && node.cluster.length > 0) { c.cluster = node.cluster; }
                     if (node.maxage && node.maxage.length > 0) { c.maxage = node.maxage; }
+                    if (prev.lat && prev.lat.length > 0) { c.lat = prev.lat; }
+                    if (prev.lon && prev.lon.length > 0) { c.lon = prev.lon; }
+                    if (prev.zoom && prev.zoom.length > 0) { c.zoom = prev.zoom; }
                     c.showmenu = node.showmenu;
                     c.panit = node.panit;
                     c.panlock = node.panlock;
@@ -99,6 +106,18 @@ module.exports = function(RED) {
                 }
             }
             else {
+                const setPrev = (pos) => {
+                    if (pos.lat && pos.lat.toString().length > 0) { prev.lat = pos.lat.toString(); }
+                    if (pos.lon && pos.lon.toString().length > 0) { prev.lon = pos.lon.toString(); }
+                    if (pos.zoom && pos.zoom.toString().length > 0) { prev.zoom = pos.zoom.toString(); }
+                }
+                if (msg.payload.hasOwnProperty('preset')) {
+                    setPrev(msg.payload.preset)
+                    return
+                }
+                if (msg.payload.hasOwnProperty('command')) {
+                    setPrev(msg.payload.command)
+                }
                 for (var c in clients) {
                     if (clients.hasOwnProperty(c)) {
                         clients[c].write(JSON.stringify(msg.payload));

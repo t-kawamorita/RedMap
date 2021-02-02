@@ -158,7 +158,7 @@ document.addEventListener ("keydown", function (ev) {
 });
 
 // Create the Initial Map object.
-map = new L.map('map').setView(startpos, startzoom);
+map = new L.map('map');
 
 var droplatlng;
 var target = document.getElementById("map")
@@ -2316,9 +2316,9 @@ function doCommand(cmd) {
         document.getElementById("lockit").checked = lockit;
     }
     // move to a new position
-    var clat = map.getCenter().lat;
-    var clon = map.getCenter().lng;
-    var czoom = map.getZoom();
+    var clat = cmd.hasOwnProperty('init')? startpos[0] : map.getCenter().lat;
+    var clon = cmd.hasOwnProperty('init') ? startpos[1] : map.getCenter().lng;
+    var czoom = cmd.hasOwnProperty('init') ? startzoom :  map.getZoom();
     if (cmd.hasOwnProperty("lat")) { clat = cmd.lat; }
     if (cmd.hasOwnProperty("lon")) { clon = cmd.lon; }
     if (cmd.hasOwnProperty("zoom")) { czoom = cmd.zoom; }
